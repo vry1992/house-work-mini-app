@@ -1,17 +1,5 @@
-import { Button } from 'antd';
-import { type FC, type PropsWithChildren } from 'react';
-import { Outlet, createBrowserRouter, useNavigate } from 'react-router';
-
-const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-  const nav = useNavigate();
-  const isAuth = true;
-
-  return isAuth ? (
-    <>
-      Children: {children} <Button onClick={() => nav('/login')} />{' '}
-    </>
-  ) : null;
-};
+import { Outlet, createBrowserRouter } from 'react-router';
+import { AuthProvider } from '../features/auth/providers/AuthProvider';
 
 function RootLayout() {
   return (
