@@ -3,8 +3,8 @@ import './App.css';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 
-// @ts-ignore
-console.log(window.Telegram.WebApp);
+console.log('init: ', window.Telegram.WebApp.initData);
+console.log('initDataUnsafe: ', window.Telegram.WebApp.initDataUnsafe);
 
 function App() {
   const [count, setCount] = useState(0);
