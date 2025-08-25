@@ -1,84 +1,137 @@
 import type { FormProps } from 'antd';
-import { Button, Form, Select, TimePicker } from 'antd';
+import { Button, Form, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { WorkingHoursService } from '../../services/WorkingHoursService';
+import { useEffect, useState, type FC } from 'react';
+import { TimePicker } from '../../../../components/TimePicker';
+import { useCommonActionCreators } from '../../../../store/actions';
+import type { WorkingHours } from '../../../auth/types/types';
+import {
+  WorkingHoursService,
+  type EditWorkingHoursPayload,
+  type SaveWorkingHoursPayload,
+} from '../../services/WorkingHoursService';
 
 type FieldType = {
-  dayOff: string;
-  startWorkFrom: Dayjs;
-  startWorkTo: Dayjs;
+  dayOffs: string[];
+  workFrom: Dayjs;
+  workTo: Dayjs;
   minBreakDuration: string;
 };
 
-export const WorkingHoursForm = () => {
-  const onFinish: FormProps<FieldType>['onFinish'] = (values) => {
-    WorkingHoursService.createWorkingHours({
-      dayOff: values.dayOff,
-      startWorkFrom: values.startWorkFrom
-        .year(1970)
-        .month(0)
-        .date(0)
-        .toISOString(),
-      startWorkTo: values.startWorkTo.year(1970).month(0).date(0).toISOString(),
-      minBreakDuration: values.minBreakDuration,
-    });
+const defaultValues = {
+  dayOffs: ['6'],
+  workFrom: dayjs('09:00', 'HH:mm'),
+  workTo: dayjs('18:00', 'HH:mm'),
+  minBreakDuration: '10',
+};
+
+export const WorkingHoursForm: FC<{
+  data?: WorkingHours;
+}> = ({ data }) => {
+  const [loading, setLoading] = useState(false);
+  const { successAction, errorAction } = useCommonActionCreators();
+  const [form] = Form.useForm();
+  const [workFrom, setWorkFrom] = useState<string>(
+    defaultValues.workFrom.toISOString()
+  );
+  const [workTo, setWorkTo] = useState<string>(
+    defaultValues.workTo.toISOString()
+  );
+
+  useEffect(() => {
+    let initData = defaultValues;
+    if (data) {
+      const userData: FieldType = {
+        dayOffs: data?.dayOffs.map(({ day }) => day.toString()),
+        workFrom: dayjs(dayjs(data?.workFrom), 'HH:mm'),
+        workTo: dayjs(dayjs(data?.workTo), 'HH:mm'),
+        minBreakDuration: data?.minBreakDuration.toString() || '10',
+      };
+      initData = userData;
+    }
+
+    setWorkFrom(initData.workFrom.toISOString());
+    setWorkTo(initData.workTo.toISOString());
+
+    for (const [name, value] of Object.entries(initData)) {
+      form.setFieldValue(name, value);
+    }
+  }, [data]);
+
+  const onWorkFromChange = (value: string) => {
+    form.setFieldValue('workFrom', dayjs(dayjs(value), 'HH:mm'));
+    setWorkFrom(value);
+  };
+
+  const onWorkToChange = (value: string) => {
+    form.setFieldValue('workTo', dayjs(dayjs(value), 'HH:mm'));
+    setWorkTo(value);
+  };
+
+  const onFinish: FormProps<FieldType>['onFinish'] = async (values) => {
+    try {
+      setLoading(true);
+
+      const basePayload: SaveWorkingHoursPayload = {
+        dayOffs: values.dayOffs,
+        workFrom: values.workFrom.toISOString(),
+        workTo: values.workTo.toISOString(),
+        minBreakDuration: values.minBreakDuration,
+      };
+
+      if (data) {
+        const editPayload: EditWorkingHoursPayload = {
+          id: data.id,
+          ...basePayload,
+        };
+        await WorkingHoursService.editWorkingHours(editPayload);
+      } else {
+        await WorkingHoursService.createWorkingHours(basePayload);
+      }
+
+      successAction('Успішно збережено!');
+    } catch (error) {
+      errorAction('Упс, помилочка!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Form
-      name="basic"
+      form={form}
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 16 }}
       style={{ maxWidth: 600 }}
-      initialValues={{ remember: true }}
       onFinish={onFinish}
       autoComplete="off"
-      layout="vertical">
-      <Form.Item<FieldType>
+      layout="vertical"
+      disabled={loading}>
+      <TimePicker
+        key={'11'}
         label="Оберіть час з якого ви починаєте працювати"
-        name="startWorkFrom"
-        tooltip={'Час коли закінчиться останній сеанс'}
-        rules={[{ required: false }]}
-        initialValue={dayjs('09:00', 'HH:mm')}>
-        <TimePicker
-          defaultValue={dayjs('09:00', 'HH:mm')}
-          minuteStep={30}
-          hourStep={1}
-          placeholder={''}
-          showSecond={false}
-          showNow={false}
-          style={{ width: '100%' }}
-          needConfirm={false}
-        />
-      </Form.Item>
-
-      <Form.Item<FieldType>
-        label="Оберіть час до якого ви працюєте"
-        name="startWorkTo"
-        tooltip={
-          'Ваші клієнти зможуть забронювати сеанс який закінчиться не пізніше вказаного часу'
-        }
+        name="workFrom"
+        tooltip={'Час коли ви готові прийняти першого клієнта'}
         rules={[{ required: true, message: 'Це поле обовʼязкове' }]}
-        initialValue={dayjs('18:00', 'HH:mm')}>
-        <TimePicker
-          defaultValue={dayjs('18:00', 'HH:mm')}
-          minuteStep={30}
-          showSecond={false}
-          showNow={false}
-          hourStep={1}
-          placeholder={''}
-          style={{ width: '100%' }}
-          needConfirm={false}
-        />
-      </Form.Item>
+        value={workFrom}
+        onOk={onWorkFromChange}
+      />
+
+      <TimePicker
+        key={'22'}
+        label="Оберіть час до якого ви працюєте"
+        name="workTo"
+        tooltip={'Час коли ви плануєте закінчувати останній сеанс'}
+        rules={[{ required: true, message: 'Це поле обовʼязкове' }]}
+        value={workTo}
+        onOk={onWorkToChange}
+      />
 
       <Form.Item<FieldType>
         label="Вкажіть мінімальний час перерви між клієнтами"
         name="minBreakDuration"
-        initialValue={'10'}
         rules={[{ required: true, message: 'Це поле обовʼязкове' }]}>
         <Select
-          defaultValue={'10'}
           style={{ width: '100%' }}
           options={[
             { value: '10', label: '10 хвилин' },
@@ -97,15 +150,13 @@ export const WorkingHoursForm = () => {
       </Form.Item>
 
       <Form.Item<FieldType>
-        initialValue={['6']}
-        name="dayOff"
+        name="dayOffs"
         tooltip={'Ваші клієнти не зможуть забронювати час у цей день'}
         rules={[{ required: false }]}>
         <Select
           mode="multiple"
           allowClear
           style={{ width: '100%' }}
-          defaultValue={['6']}
           options={[
             {
               label: 'Понеділок',
@@ -139,11 +190,13 @@ export const WorkingHoursForm = () => {
         />
       </Form.Item>
 
-      <Form.Item label={null}>
-        <Button type="primary" htmlType="submit">
-          Зберегти
-        </Button>
-      </Form.Item>
+      <Button
+        style={{ width: '100%' }}
+        type="primary"
+        loading={loading}
+        htmlType="submit">
+        {loading ? 'Збереження...' : 'Зберегти'}
+      </Button>
     </Form>
   );
 };

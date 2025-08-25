@@ -1,5 +1,6 @@
-import { Avatar, Flex, Layout, theme } from 'antd';
+import { Avatar, Button, Flex, Layout, theme } from 'antd';
 import { type FC } from 'react';
+import { useNavigate } from 'react-router';
 import { useModal } from '../hooks/useModal';
 import './style.scss';
 import style from './test.module.scss';
@@ -7,11 +8,16 @@ import style from './test.module.scss';
 const { Header: AntdHeader } = Layout;
 
 export const Header: FC<{ photoUrl: string }> = ({ photoUrl }) => {
+  const navigate = useNavigate();
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
   const { Modal: AvatarModal, ...avatarModalProps } = useModal();
+
+  const goBack = () => {
+    navigate(-1);
+  };
 
   return (
     <>
@@ -20,7 +26,10 @@ export const Header: FC<{ photoUrl: string }> = ({ photoUrl }) => {
           padding: 8,
           background: colorBgContainer,
         }}>
-        <Flex align="center" justify="center">
+        <Flex align="center" justify="space-between">
+          <Button type="text" onClick={goBack}>
+            Назад
+          </Button>
           <Avatar
             size={50}
             src={<img src={photoUrl} alt="avatar" />}

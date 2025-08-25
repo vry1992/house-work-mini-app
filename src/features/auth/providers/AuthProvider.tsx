@@ -13,10 +13,12 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   const isAuthenticated = auth.isAuthenticated;
 
   useEffect(() => {
-    console.log('isAuthenticated => ', isAuthenticated);
     if (!isAuthenticated) {
-      authActions.login(MOCK_INIT_DATA);
-      // authActions.login(window.Telegram.WebApp.initData);
+      if (import.meta.env.VITE_APP_MODE === 'test') {
+        authActions.login(window.Telegram.WebApp.initData);
+      } else {
+        authActions.login(MOCK_INIT_DATA);
+      }
     }
   }, [isAuthenticated]);
 

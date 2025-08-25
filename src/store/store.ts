@@ -1,9 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { authReducer } from '../features/auth/store/auth.slice';
+import { listenerMiddleware } from './listener-middleware';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+  },
+  middleware: (getDefaultMiddleware) => {
+    return getDefaultMiddleware().prepend(listenerMiddleware.middleware);
   },
 });
 

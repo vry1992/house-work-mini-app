@@ -26,8 +26,8 @@ export type AuthState = {
 
 export type WorkingHours = {
   id: string;
-  startWorkFrom: string;
-  startWorkTo: string;
+  workFrom: string;
+  workTo: string;
   minBreakDuration: number;
   dayOffs: DayOff[];
 };

@@ -1,5 +1,5 @@
 import { Modal as AntdModal, type ModalProps } from 'antd';
-import { useState, type FC } from 'react';
+import { useCallback, useState, type FC } from 'react';
 
 type Props = ModalProps;
 
@@ -13,13 +13,16 @@ export const useModal = () => {
     setIsOpen(false);
   };
 
-  const Modal: FC<Props> = ({ title, children, onCancel, ...rest }) => {
-    return (
-      <AntdModal title={title} open={isOpen} {...rest} onCancel={onCancel}>
-        {children}
-      </AntdModal>
-    );
-  };
+  const Modal: FC<Props> = useCallback(
+    ({ title, children, onCancel, ...rest }) => {
+      return (
+        <AntdModal title={title} open={isOpen} {...rest} onCancel={onCancel}>
+          {children}
+        </AntdModal>
+      );
+    },
+    [isOpen]
+  );
 
   return {
     Modal,

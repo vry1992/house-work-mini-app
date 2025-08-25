@@ -1,5 +1,8 @@
+import { useAuthSelectors } from '../../../auth/store/auth.selectors';
 import { WorkingHoursForm } from '../components/WorkingHoursForm';
 
 export const WorkingHours = () => {
-  return <WorkingHoursForm />;
+  const { user } = useAuthSelectors();
+
+  return <WorkingHoursForm data={user?.workingHours} />;
 };
